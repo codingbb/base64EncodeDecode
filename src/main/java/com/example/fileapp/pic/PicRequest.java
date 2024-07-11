@@ -8,6 +8,6 @@ public class PicRequest {
     @Data
     public static class UploadDTO{
         private String title;
-        private MultipartFile imgFile;
+        private MultipartFile imgFilename;
     }
 }
