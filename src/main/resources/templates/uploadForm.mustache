@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+
 </head>
 <body>
 <h1>사진등록페이지</h1>
@@ -19,11 +20,93 @@
     </li>
 </ul>
 
-<form action="/upload" method="post" enctype="multipart/form-data">
-    <input type="text" name="title" placeholder="사진제목...">
-    <input type="file" name="imgFilename" >
-    <button>사진업로드</button>
+<form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+    <input type="text" id="title" name="title" placeholder="사진 제목...">
+    <input type="file" id="imgFilename" name="imgFilename">
+    <button>사진 업로드</button>
 </form>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    const WIDTH = 30;
+    const HEIGHT = 20;
+    let resizedFile;
+
+    // Canvas 요소를 생성하고 body에 추가
+    let canvas = $("<canvas>")
+            .attr("width", WIDTH)
+            .attr("height", HEIGHT)
+            .appendTo("body");
+
+    $('#imgFilename').on('change', function () {
+        const file = this.files[0];
+        if (file) {
+            const context = canvas[0].getContext("2d");
+            //새로운 이미지 객체 생성
+            const img = new Image();
+            //파일 읽기를 위한 FileReader 객체를 생성
+            const reader = new FileReader();
+
+            //파일 읽기가 완료되면 실행되는 콜백 함수 // onload 이벤트
+            reader.onload = function (e) {
+                img.onload = function () {
+                    //이미지를 캔버스에 그림
+                    context.drawImage(img, 0, 0, canvas.width(), canvas.height());
+
+                    canvas[0].toBlob(function (blob) {
+                        resizedFile = new File([blob], file.name, {type: file.type});
+                    }, file.type);
+                };
+
+                img.src = e.target.result;
+            };
+
+            // 바이너리 -> 문자열로 변환
+            reader.readAsDataURL(file);
+        }
+    });
+
+    $('#uploadForm').on('submit', function (e) {
+        e.preventDefault();
+
+        const formData = new FormData();
+        formData.append("title", $("#title").val());
+        formData.append("imgFilename", resizedFile);
+
+        $.ajax({
+            url: "/upload",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false
+
+        }).done((res) => {
+            alert("업로드 성공!");
+
+        }).fail((res) => {
+            alert("업로드 실패");
+        });
+        // urlToFile(e.target.result);
+
+    });
+
+
+    function urlToFile(url) {
+        // console.log("url - " + url);
+
+        // 데이터 URI 형식 분리
+        let mimeTypeIndex = url.indexOf(";");
+        let mimeType = url.substring(5, mimeTypeIndex); // "image/jpeg"
+        console.log("mimeType " + mimeType);
+
+        // 데이터 분리
+        let base64Index = url.indexOf(",") + 1;
+        let base64 = url.substring(base64Index);
+        console.log("base64", base64);
+    }
+
+</script>
 
 </body>
 </html>
